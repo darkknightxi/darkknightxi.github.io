@@ -1,7 +1,15 @@
 ---
-title: "darkknightxi.github.io"
+title: "Kartikeya's Musings"
 ---
+Writing about my adventures as I dive deep into the world of Deep Learning, Literature, Movies, Music, and Life. You will find me writing technical blogs on deep learning, sharing what I learn, and occasionally reflecting on things as I experience them.
 
-This is a Quarto website.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+
+
+<p align="center">
+  <img 
+    src="lotr2.jpg"
+  >
+</p>
+
+

@@ -1,8 +1,11 @@
 project:
   type: website
+  output-dir: docs
 
 website:
   title: "Blog"
+  site-url: https://darkknightxi.github.io
+  description: "setting up a blog"
   navbar:
     right:
       - about.qmd

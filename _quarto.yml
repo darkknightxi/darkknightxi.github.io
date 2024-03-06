@@ -3,16 +3,16 @@ project:
   output-dir: docs
 
 website:
-  title: "darkknightxi.github.io"
+  title: "Kartikeya's Musings"
   navbar:
     left:
-      - href: index.qmd
-        text: Home
+      - href: blog/blog.qmd
+        text: Blog
       - about.qmd
 
 format:
   html:
-    theme: cosmo
+    theme: journal 
     css: styles.css
     toc: true
 
