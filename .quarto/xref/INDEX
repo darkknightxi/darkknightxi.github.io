@@ -19,5 +19,11 @@
   },
   "blog/blog.qmd": {
     "blog.html": "e1123bbd"
+  },
+  "blog/posts/ConvNets/ConvNets.qmd": {
+    "ConvNets.html": "eb2b1700"
+  },
+  "blog/posts/ConvNets/index.qmd": {
+    "index.html": "ad8a3a6a"
   }
 }

@@ -1,0 +1,391 @@
+---
+title: Convolutional Neural Networks from Scratch
+author: Kartikeya Khare
+date: 'March 6, 2024'
+format:
+  html:
+    toc: true
+    toc-title: Contents
+    toc-location: left
+jupyter: python3
+---
+
+This blog post is a code-first introduction to Convolutional Networks (ConvNets). We will build our own ConvNet from scratch and understand the fundamentals of how and why they work so well, particularly for image processing tasks.
+
+NB: This blog uses some functions from the [little_ai](https://github.com/darkknightxi/little_ai) library I am currently building.   
+
+# Importing Libraries
+
+```{python}
+import torch
+from torch import nn
+
+from torch.utils.data import default_collate
+from typing import Mapping
+
+from little_ai.training import *
+from little_ai.datasets import *
+```
+
+```{python}
+import pickle,gzip,math,os,time,shutil,torch,matplotlib as mpl, numpy as np
+import pandas as pd,matplotlib.pyplot as plt
+from pathlib import Path
+from urllib.request import urlretrieve
+from torch import tensor
+import torch.nn.functional as F
+from torch import optim
+
+from torch.utils.data import DataLoader
+from typing import Mapping
+```
+
+```{python}
+mpl.rcParams['image.cmap'] = 'gray'
+```
+
+```{python}
+MNIST_URL='https://github.com/mnielsen/neural-networks-and-deep-learning/blob/master/data/mnist.pkl.gz?raw=true'
+path_data = Path('data')
+path_data.mkdir(exist_ok=True)
+path_gz = path_data/'mnist.pkl.gz'
+if not path_gz.exists(): urlretrieve(MNIST_URL, path_gz)
+with gzip.open(path_gz, 'rb') as f: ((x_train, y_train), (x_valid, y_valid), _) = pickle.load(f, encoding='latin-1')
+x_train, y_train, x_valid, y_valid = map(tensor, [x_train, y_train, x_valid, y_valid])
+```
+
+# Why ConvNets
+
+<img src = "attachment:1f733cfc-7a1b-4790-bbb2-99c62257ccd8.png">
+> Figure 1: A simple neural net with two hidden layers
+
+Images have properties that necessitate the need for specialized architectures.
+
+- They are high-dimensional. RGB images of dimensions $224\times224$ are very common (i.e., $150, 528$ input dimensions). Hidden layers in fully connected networks are generally larger than the input size, so even for a shallow network, the number of weights would exceed $150,528^2$ or $22$ billion. This poses obvious practical problems in terms of the required training data, memory, and computation.
+- Nearby image pixels are statistically related. However, fully connected networks have no notion of "nearby" and treat the relation between every input equally.
+- The interpretation of an image is stable under geometric transformations. An image of a tree is still an image of a tree if we shift it leftwards by a few pixels. However, this shift is stable under geometric transformations. Hence, a fully connected model must learn the patterns of pixels that signify a tree separately at every position, which is inefficient.
+
+Convolutional layers process each local image region independently, using parameters shared across the whole image. They use fewer parameters than fully connected layers, exploit the spatial relationships between nearby pixels, and don't have to re-learn the interpretation of pixels at every position.
+
+<img src="attachment:526f7c71-95ca-46c6-a220-522ec88abb91.png">
+> Figure 2: Architecture of a simple ConvNet
+
+# Convolution Operation
+
+Convolutional layers perform the convolution operation using kernels (or filters) which is simply a matrix, over an image. Convolution is a simple mathematical operation that involves addition and multiplication.
+
+![Convolution Operation](attachment:29eb9b7e-7f1e-4809-b209-e6b1ce37a4a6.png)
+
+> Figure 3: Convolution operation using a $2\times2$ kernel over a $3\times4$ image that results in a $2\times3$ output matrix. The kernel slides over the image, adding the products of the overlapping matrix values. Source: [Deep Learning](https://www.deeplearningbook.org) by Goodfellow, et al.
+
+Now, let's implement our own convolution operation using numpy.
+We'll choose an image from the training set and create a simple $3\times 3$ matrix as our kernel and, as we'll see,  the convolution operation with the right choice of the kernel will be able to identify some pattern in our image.
+
+```{python}
+x_imgs = x_train.view(-1, 28, 28)
+xv_imgs = x_valid.view(-1, 28, 28)
+```
+
+```{python}
+mpl.rcParams['figure.dpi'] = 30
+```
+
+```{python}
+im3 = x_imgs[7]
+show_image(im3);
+```
+
+Let's create a simple $3\times3$ kernel (people in the computer vision world call it a kernel; essentially it's just a tensor). 
+
+NB: Actually, the values of kernels are not entered manually but are learned as parameters during training. 
+
+```{python}
+top_edge = tensor([[-1, -1, -1], 
+                  [0, 0, 0], 
+                  [1, 1, 1]]).float()
+```
+
+```{python}
+show_image(top_edge, noframe=False);
+```
+
+This kernel will slide along all the $3\times 3$ windows in our images and compute the convolutions. 
+If  $3\times 3$` window looks like this:
+
+$$\begin{matrix} a & b & c \\ d & e & f \\ g & h & i\end{matrix}$$
+
+then the result will be $-a -b -c +g+h+i$
+
+```{python}
+df = pd.DataFrame(im3[:13,:23])
+df.style.format(precision=2).set_properties(**{'font-size':'7pt'}).background_gradient('Greys')
+```
+
+If we compute the convolution over the $3\times 3$ window along rows $3$ to $5$ and columns $14$ to $16$ (the top edge of the $3$), the result will be:
+
+```{python}
+(im3[3:6,14:17] * top_edge).sum()
+```
+
+Similarly, doing this in the window made by rows $7, 8, 9$ and columns $14, 15, 16$ (the bottom edge of $3$), we'll get:
+
+```{python}
+(im3[7:10, 14:17] * top_edge).sum()
+```
+
+The positive pixels represent the "lighter" pixels and negative values represent the "darker" pixels in relative terms. Our kernel should be able to highlight the top edges of $3$ by making the top edges lighter and the bottom edges darker.
+
+Note that to compute the convolutions, we are simply doing numpy's element-wise multiplication followed by a sum.
+
+Let's create a function which will compute the the convolutions over any $3 \times 3$ window with any $3 \times 3$ kernel.
+
+```{python}
+#row and col define the center coordinate of a 3x3 window
+def apply_kernel(row, col, kernel): return (im3[row-1:row+2, col-1:col+2] * kernel).sum()
+```
+
+```{python}
+apply_kernel(4, 15, top_edge)
+```
+
+Next, we want to slide this kernel over the entire image. To do this, we'll use list comprehension inside a list comprehension to create coordinates over which we want to move.
+
+```{python}
+rng = range(1, 27)
+top_edge3 = tensor([[apply_kernel(i, j, top_edge) for j in rng] for i in rng])
+show_image(top_edge3);
+```
+
+Our simple little $3 \times 3$ kernel has managed to highlight the top edges of the digit $3$ !
+
+Here's a subtle thing that we need to notice.
+
+```{python}
+top_edge3.shape
+```
+
+The shape of the output image is $26\times 26$ while the input image had $28\times 28$ dimensions. It is easy to see why the output dimensions change if we visualize the kernel sliding over all the $3\times 3$ windows in our input image. In general, if a kernel of dimension $f\times f$ convolve over an image of dimension $N\times N$, the output will have dimensions $(N-f+1)\times (N-f+1)$.
+
+Let's repeat the same exercise using another kernel which should be able to highlight the left edges.
+
+```{python}
+left_edge = tensor([[-1, 0, 1],
+                    [-1, 0, 1],
+                    [-1, 0, 1]]).float()
+show_image(left_edge, noframe=False);
+```
+
+```{python}
+left_edge3 = tensor([[apply_kernel(i, j, left_edge) for j in rng] for i in rng])
+show_image(left_edge3);
+```
+
+And it works as expected.
+
+# Convolutions in PyTorch
+
+The convolutions that we implemented in python above are quite slow.
+
+```{python}
+%timeit -n 1 tensor([[apply_kernel(i, j, left_edge) for j in rng] for i in rng])
+```
+
+PyTorch has an `Conv2d` class that is optimized for convolutions and offers added features and benefits.
+
+```{python}
+inp = im3[None,None,:,:].float()
+```
+
+`conv2d` expects the input image to be a rank-four tensor where the dimensions correspond to `batch, channel, height, width` respectively. Since we are only considering a single image, our batch size (first dimension) is one, and we are working with black-and-white images, our images have a single channel. Colored images have three channels: red, green, and blue.  
+
+```{python}
+%timeit -n 100 F.conv2d(inp, left_edge[None,None])
+```
+
+# Convolutions over a batch of images
+
+When training our network, we pass the input images to the models as batches. `conv2d` allows us to conveniently implement the convolutions using multiple kernels simultaneously over a batch of images.
+
+Let's make two more kernels to detect diagnals in the image. 
+
+```{python}
+diag1_edge = tensor([[ 0,-1, 1],
+                     [-1, 1, 0],
+                     [ 1, 0, 0]]).float()
+```
+
+```{python}
+show_image(diag1_edge, noframe=False);
+```
+
+```{python}
+diag2_edge = tensor([[ 1,-1, 0],
+                     [ 0, 1,-1],
+                     [ 0, 0, 1]]).float()
+```
+
+```{python}
+show_image(diag2_edge);
+```
+
+Let's create a batch of 16 images.
+
+```{python}
+xb = x_imgs[:16][:, None]
+xb.shape
+```
+
+And stack all our kernels together
+
+```{python}
+edge_kernels = torch.stack([left_edge, top_edge, diag1_edge, diag2_edge])[:, None]
+edge_kernels.shape
+```
+
+Now, we pass the batch and kernel to `conv2d`
+
+```{python}
+batch_features = F.conv2d(xb, edge_kernels)
+batch_features.shape
+```
+
+The output indicates that we have $16$ images in the batch, $4$ filters, and each image is of dimension $26\times26$.
+
+Let's see what the kernels detect when applied on a particular image
+
+```{python}
+x = xb[1, 0]
+show_image(x);
+```
+
+```{python}
+show_images([batch_features[1,i] for i in range(4)]);
+```
+
+# Strides and Padding
+
+Using the convolution operation, we lose some pixels from our image, effectively losing data, which is never good. Using appropriate padding, we can ensure that the output activation map is the same size as the input image.
+<img src="attachment:7ff7b377-afae-416d-a20d-dc70b8443b38.png">
+>Figure 4: Padding
+
+Zero padding is a common approach where the input outside the valid range is $0$. If we pad the images so that the output dimensions are the same as the input dimensions, then it's called valid padding. If we add a kernel of size $f\times f$ (with $f$ an odd number), the necessary padding on each side to keep the same shape is $f//2$.
+
+So far, we've seen our kernel slide over the image grid by one unit, or in other words, it has a *stride* of 1. However, a kernel can have a stride greater than $1$ as well. A stride of 2 means creating roughly half the number of outputs.
+
+<img src="attachment:66edf505-fd1c-4990-8987-8f36c3dfc1e7.png">
+> Figure 5: stride-2 convolutions
+
+
+If we have an image of size $n\times n$, a kernel of size $f\times f$, padding of $p$ pixels on each side, and a stride of $s$ then the output of the convolution operation will have a size of $(\frac{n-f+2p}{s} + 1) \times (\frac{n-f+2p}{s} + 1)$.
+
+<img src="attachment:5f77f86c-fcb0-44f9-a735-f27656c91804.png">
+> Figure 6: With a $5\times 5$ input, $4\times 4$ kernel, and $2$ pixels of padding, we end up with a $6\times 6$ activation map.
+
+# Creating a CNN
+
+We are now able to create and train a Convolutional Neural Network. But before that, let's recall how we'd build a simple one-layer MLP using `nn.Sequential`.
+
+```{python}
+n,m = x_train.shape
+c = y_train.max()+1
+nh = 50
+```
+
+```{python}
+model = nn.Sequential(nn.Linear(m,nh), nn.ReLU(), nn.Linear(nh,10))
+```
+
+What if we use the same idea to build a CNN as well.
+
+```{python}
+broken_cnn = nn.Sequential(
+    nn.Conv2d(1, 30, kernel_size=3, padding=1),
+    nn.ReLU(),
+    nn.Conv2d(30, 10, kernel_size=3, padding=1)
+)
+```
+
+```{python}
+broken_cnn(xb).shape
+```
+
+We want to have 10 output channels for each of the 16 images in the batch which isn't the case here.
+
+To make our ConvNet architecture, we'll first create a `conv` function with appropriate input channels, output channels, stride, kernel size, and padding which returns a sequential model with an optional activation function.
+
+```{python}
+def conv(ni, nf, ks=3, stride=2, act=True):
+    res = nn.Conv2d(ni, nf, kernel_size=ks, stride=stride, padding=ks//2)
+    if act: res = nn.Sequential(res, nn.ReLU())
+    return res
+```
+
+and then put those `conv` functions together to get our ConvNet architecture. The `nn.Flatten()` removes the unneccesary unit axes. The commented dimensions represent the dimensions of the output from that conv layer.
+
+```{python}
+simple_cnn = nn.Sequential(
+    conv(1, 4),                 #14x14
+    conv(4, 8),                 #7x7
+    conv(8, 16),                #4x4
+    conv(16, 16),               #2x2
+    conv(16, 10, act=False),    #1x1
+    nn.Flatten()
+)
+```
+
+```{python}
+simple_cnn(xb).shape
+```
+
+Now lets create our Datasets and DataLoaders to create batches for training.
+
+```{python}
+x_imgs = x_train.view(-1, 1, 28, 28)
+xv_imgs = x_valid.view(-1, 1, 28, 28)
+train_ds, valid_ds = Dataset(x_imgs, y_train), Dataset(xv_imgs, y_valid)
+```
+
+```{python}
+def_device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
+
+def to_device(x, device=def_device):
+    if isinstance(x, torch.Tensor): return x.to(device)
+    if isinstance(x, Mapping): return {k:v.to(device) for k,v in x.items()}
+    return type(x)(to_device(o, device) for o in x)
+
+def collate_device(b): return to_device(default_collate(b))
+```
+
+```{python}
+bs = 256
+lr = 0.4
+train_dl,valid_dl = get_dls(train_ds, valid_ds, bs, collate_fn=collate_device)
+opt = optim.SGD(simple_cnn.parameters(), lr=lr)
+```
+
+Notice that we move our model (and its parameters) to the gpu (if its available) to speed up training.
+
+We'll be using accuracy as a metric.
+
+Let's call `fit` and train for 5 epochs.
+
+```{python}
+loss,acc = fit(5, simple_cnn.to(def_device), F.cross_entropy, opt, train_dl, valid_dl)
+```
+
+and it seems to be working fine.
+
+Now let's reduce the learning rate to 0.1 and train again for 5 epochs.
+
+```{python}
+opt = optim.SGD(simple_cnn.parameters(), lr=lr/4)
+loss,acc = fit(5, simple_cnn.to(def_device), F.cross_entropy, opt, train_dl, valid_dl)
+```
+
+... and accuracy has improved to 0.97!
+
+That was all about building and training ConvNets from the ground up. 
+
+
+Thankyou for reading. 
+
