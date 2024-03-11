@@ -9,9 +9,8 @@
   {
     "listing": "/blog/blog.html",
     "items": [
-      "/blog/posts/post-with-code/index.html",
-      "/blog/posts/ConvNets/index.html",
-      "/blog/posts/welcome/index.html"
+      "/blog/posts/ConvNets/ConvNets.html",
+      "/blog/posts/stable-diffusion/stable-diffusion.html"
     ]
   }
 ]

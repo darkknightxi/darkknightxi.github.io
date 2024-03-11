@@ -8,11 +8,19 @@ website:
     left:
       - href: blog/blog.qmd
         text: Blog
-      - about.qmd
+    right:
+      - href: https://github.com/darkknightxi
+        icon: github
+      - href: https://www.linkedin.com/in/kartikeya-khare-ds
+        icon: linkedin
+      - href: mailto:kartikeyakhare11@gmail.com
+        icon: envelope
+      - href: https://drive.google.com/file/d/1l19myiJVy37V3ySUHYm7Aaw4Dted2ktd/view?usp=sharing
+        text: Resume
 
 format:
   html:
-    theme: journal 
+    theme: lux 
     css: styles.css
     toc: true
 

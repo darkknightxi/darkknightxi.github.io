@@ -13,7 +13,7 @@ format:
     toc-location: left
     toc-title: Contents
 execute:
-  freeze: true
+  enabled: true
 jupyter: python3
 ---
 

@@ -25,5 +25,17 @@
   },
   "blog/posts/ConvNets/index.qmd": {
     "index.html": "ad8a3a6a"
+  },
+  "blog/posts/stable-diffusion/Building_Stable_Diffusion_from_its_Components.qmd": {
+    "Building_Stable_Diffusion_from_its_Components.html": "fe2b839b"
+  },
+  "blog/posts/stable-diffusion/Building_Stable_Diffusion_from_its_Components.ipynb": {
+    "Building_Stable_Diffusion_from_its_Components.html": "78f354ec"
+  },
+  "blog/posts/ConvNets/ConvNets.ipynb": {
+    "ConvNets.html": "7840bf89"
+  },
+  "blog/posts/stable-diffusion/stable-diffusion.ipynb": {
+    "stable-diffusion.html": "f6c65fff"
   }
 }
