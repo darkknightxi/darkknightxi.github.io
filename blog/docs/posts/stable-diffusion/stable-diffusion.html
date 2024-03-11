@@ -194,6 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#stable-diffusion" id="toc-stable-diffusion" class="nav-link" data-scroll-target="#stable-diffusion">Stable Diffusion</a></li>
   <li><a href="#the-diffusion-pipeline" id="toc-the-diffusion-pipeline" class="nav-link" data-scroll-target="#the-diffusion-pipeline">The Diffusion Pipeline</a></li>
   <li><a href="#looking-inside-the-pipeline" id="toc-looking-inside-the-pipeline" class="nav-link" data-scroll-target="#looking-inside-the-pipeline">Looking inside the pipeline</a></li>
+  <li><a href="#img2img-pipeline" id="toc-img2img-pipeline" class="nav-link" data-scroll-target="#img2img-pipeline">Img2Img Pipeline</a></li>
   </ul>
 </nav>
 </nav>
@@ -488,8 +489,11 @@ Please note that authentication is recommended but still optional to access publ
 </div>
 </div>
 <p>Voila! Here’s our Batman with his coffee.</p>
+</section>
+<section id="img2img-pipeline" class="level1">
+<h1>Img2Img Pipeline</h1>
 <p>This was the text2image pipeline. Now, let’s build the img2img pipeline. Instead of starting with pure noise, we’ll start with a certain image and add noise to it. We skip the initial steps of the denoising process and pretend that the given image is what the algorithm came up with.</p>
-<div id="cell-54" class="cell" data-outputid="cf3ef238-c6ed-4f33-a1af-5b9ba62f65b0" data-execution_count="30">
+<div id="cell-55" class="cell" data-outputid="cf3ef238-c6ed-4f33-a1af-5b9ba62f65b0" data-execution_count="30">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>curl <span class="op">--</span>output philosophical_dog.jpg <span class="st">'https://puppytoob.com/wp-content/uploads/2013/04/Dogs_In_Wind_8.jpg'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
@@ -497,7 +501,7 @@ Please note that authentication is recommended but still optional to access publ
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 25821  100 25821    0     0   134k      0 --:--:-- --:--:-- --:--:--  134k</code></pre>
 </div>
 </div>
-<div id="cell-55" class="cell" data-outputid="d22643b2-a12f-4a96-a901-8855b4666fd5" data-execution_count="31">
+<div id="cell-56" class="cell" data-outputid="d22643b2-a12f-4a96-a901-8855b4666fd5" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>input_image <span class="op">=</span> Image.<span class="bu">open</span>(<span class="st">'philosophical_dog.jpg'</span>).resize((<span class="dv">512</span>, <span class="dv">512</span>))</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>input_image</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
@@ -509,10 +513,10 @@ Please note that authentication is recommended but still optional to access publ
 </div>
 </div>
 <p>Let’s create a function to encode our image into the latent space using <code>vae</code>.</p>
-<div id="cell-57" class="cell" data-execution_count="32">
+<div id="cell-58" class="cell" data-execution_count="32">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torchvision <span class="im">import</span> transforms <span class="im">as</span> tfms</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-58" class="cell" data-execution_count="33">
+<div id="cell-59" class="cell" data-execution_count="33">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pil_to_latent(input_im):</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Single image -&gt; single latent in a batch (so size 1, 4, 64, 64)</span></span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
@@ -520,7 +524,7 @@ Please note that authentication is recommended but still optional to access publ
 <span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.18215</span> <span class="op">*</span> latent.latent_dist.sample()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>… and a function to get the image back from latent representation</p>
-<div id="cell-60" class="cell" data-execution_count="34">
+<div id="cell-61" class="cell" data-execution_count="34">
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latents_to_pil(latents):</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># batch of latents -&gt; list of images</span></span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    latents <span class="op">=</span> (<span class="dv">1</span> <span class="op">/</span> <span class="fl">0.18215</span>) <span class="op">*</span> latents</span>
@@ -532,7 +536,7 @@ Please note that authentication is recommended but still optional to access publ
 <span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>    pil_images <span class="op">=</span> [Image.fromarray(image) <span class="cf">for</span> image <span class="kw">in</span> images]</span>
 <span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pil_images</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-61" class="cell" data-outputid="870f1c51-9e7b-4c31-9184-2dd50b85cc04" data-execution_count="35">
+<div id="cell-62" class="cell" data-outputid="870f1c51-9e7b-4c31-9184-2dd50b85cc04" data-execution_count="35">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>encoded <span class="op">=</span> pil_to_latent(input_image)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>encoded.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="35">
@@ -540,7 +544,7 @@ Please note that authentication is recommended but still optional to access publ
 </div>
 </div>
 <p>Now, let’s repeat the process we did above, except that we will start with the input image and not with pure noise.</p>
-<div id="cell-63" class="cell" data-outputid="8c68b389-bb6d-4fe1-ab3f-f0bd9a99772e" data-execution_count="42">
+<div id="cell-64" class="cell" data-outputid="8c68b389-bb6d-4fe1-ab3f-f0bd9a99772e" data-execution_count="42">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co">#set parameters</span></span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>prompt <span class="op">=</span> [<span class="st">'A painting in the style of Vincent Van Gogh'</span>]</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>height <span class="op">=</span> <span class="dv">512</span></span>
