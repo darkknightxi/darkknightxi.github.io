@@ -20,11 +20,7 @@ website:
 
 format:
   html:
-<<<<<<< HEAD
-    theme: pulse
-=======
     theme: lux 
->>>>>>> 8d1a3c2 (change theme)
     css: styles.css
     toc: true
 
