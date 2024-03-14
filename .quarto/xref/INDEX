@@ -37,5 +37,8 @@
   },
   "blog/posts/stable-diffusion/stable-diffusion.ipynb": {
     "stable-diffusion.html": "f6c65fff"
+  },
+  "blog/posts/ddpm/DDPM.ipynb": {
+    "DDPM.html": "f63276b8"
   }
 }
