@@ -40,5 +40,8 @@
   },
   "blog/posts/ddpm/DDPM.ipynb": {
     "DDPM.html": "f63276b8"
+  },
+  "blog/posts/style-transfer/Style_Transfer.ipynb": {
+    "Style_Transfer.html": "cb68e76f"
   }
 }

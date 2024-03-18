@@ -46,7 +46,7 @@
     "href": "blog/blog.html",
     "title": "Blog",
     "section": "",
-    "text": "Denoising Diffusion Probabilistic Models\n\n\n\n\n\n\nDeep Learning\n\n\nGenerative AI\n\n\nDiffusion\n\n\n\n\n\n\n\n\n\nMar 14, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\n\n\n\n\n\n\nConvolutional Neural Networks from Scratch\n\n\n\n\n\n\nDeep Learning\n\n\nComputer Vision\n\n\n\n\n\n\n\n\n\nMar 6, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\n\n\n\n\n\n\nBuilding Stable Diffusion from its Components\n\n\n\n\n\n\nDeep Learning\n\n\nGenerative AI\n\n\nDiffusion\n\n\n\n\n\n\n\n\n\nJan 31, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\nNo matching items"
+    "text": "Neural Style Transfer\n\n\n\n\n\n\nDeep Learning\n\n\nGenerative AI\n\n\n\n\n\n\n\n\n\nMar 18, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\n\n\n\n\n\n\nDenoising Diffusion Probabilistic Models\n\n\n\n\n\n\nDeep Learning\n\n\nGenerative AI\n\n\nDiffusion\n\n\n\n\n\n\n\n\n\nMar 14, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\n\n\n\n\n\n\nConvolutional Neural Networks from Scratch\n\n\n\n\n\n\nDeep Learning\n\n\nComputer Vision\n\n\n\n\n\n\n\n\n\nMar 6, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\n\n\n\n\n\n\nBuilding Stable Diffusion from its Components\n\n\n\n\n\n\nDeep Learning\n\n\nGenerative AI\n\n\nDiffusion\n\n\n\n\n\n\n\n\n\nJan 31, 2024\n\n\nKartikeya Khare\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "blog/posts/ConvNets/ConvNets.html",
@@ -131,5 +131,40 @@
     "title": "Denoising Diffusion Probabilistic Models",
     "section": "Create model",
     "text": "Create model\nUnet model is used to predict noise from the image. We’ll import the unet model from Diffusers library.\n\nfrom diffusers import UNet2DModel\n\n/usr/local/lib/python3.10/dist-packages/diffusers/utils/outputs.py:63: UserWarning: torch.utils._pytree._register_pytree_node is deprecated. Please use torch.utils._pytree.register_pytree_node instead.\n  torch.utils._pytree._register_pytree_node(\n/usr/local/lib/python3.10/dist-packages/diffusers/utils/outputs.py:63: UserWarning: torch.utils._pytree._register_pytree_node is deprecated. Please use torch.utils._pytree.register_pytree_node instead.\n  torch.utils._pytree._register_pytree_node(\n\n\n\nmodel = UNet2DModel(in_channels=1, out_channels=1, block_out_channels=(32, 64, 128, 128))"
+  },
+  {
+    "objectID": "blog/posts/style-transfer/Style_Transfer.html",
+    "href": "blog/posts/style-transfer/Style_Transfer.html",
+    "title": "Neural Style Transfer",
+    "section": "",
+    "text": "Style transfer is a technique where the visual style of an image is transferred onto the content of another image. The goal is to generate a new image that preserves the content details of one image while adopting the artistic style of another image. In this blog, we implement the A Neural Algorithm for Artistic Style paper by Gatys, et al. which introduced the neural style tranfer.\nNB: We’ll be using the little_ai library to implement the paper."
+  },
+  {
+    "objectID": "blog/posts/style-transfer/Style_Transfer.html#load-vgg-network",
+    "href": "blog/posts/style-transfer/Style_Transfer.html#load-vgg-network",
+    "title": "Neural Style Transfer",
+    "section": "Load VGG network",
+    "text": "Load VGG network\n\nprint(timm.list_models('*vgg*'))\n\n['repvgg_a0', 'repvgg_a1', 'repvgg_a2', 'repvgg_b0', 'repvgg_b1', 'repvgg_b1g4', 'repvgg_b2', 'repvgg_b2g4', 'repvgg_b3', 'repvgg_b3g4', 'repvgg_d2se', 'vgg11', 'vgg11_bn', 'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn']\n\n\n\nvgg16 = timm.create_model('vgg16', pretrained=True).to(def_device).features\n\n\nvgg16\n\nSequential(\n  (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (1): ReLU(inplace=True)\n  (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (3): ReLU(inplace=True)\n  (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n  (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (6): ReLU(inplace=True)\n  (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (8): ReLU(inplace=True)\n  (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n  (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (11): ReLU(inplace=True)\n  (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (13): ReLU(inplace=True)\n  (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (15): ReLU(inplace=True)\n  (16): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n  (17): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (18): ReLU(inplace=True)\n  (19): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (20): ReLU(inplace=True)\n  (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (22): ReLU(inplace=True)\n  (23): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n  (24): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (25): ReLU(inplace=True)\n  (26): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (27): ReLU(inplace=True)\n  (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))\n  (29): ReLU(inplace=True)\n  (30): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n)"
+  },
+  {
+    "objectID": "blog/posts/style-transfer/Style_Transfer.html#normalize-images",
+    "href": "blog/posts/style-transfer/Style_Transfer.html#normalize-images",
+    "title": "Neural Style Transfer",
+    "section": "Normalize Images",
+    "text": "Normalize Images\nThis model expects images normalized with the same stats as those used during training, which in this case requires the stats of the ImageNet dataset.\n\nimagenet_mean = tensor([0.485, 0.456, 0.406])\nimagenet_std = tensor([0.229, 0.224, 0.225])\n\n\ndef normalize(img):\n    imagenet_mean = tensor([0.485, 0.456, 0.406])[:, None, None].to(def_device)\n    imagenet_std = tensor([0.229, 0.224, 0.225])[:, None, None].to(def_device)\n    return (img - imagenet_mean)/ imagenet_std\n\n\nnormalize(content_im).min(), normalize(content_im).max()\n\n(tensor(-2.1179, device='cuda:0'), tensor(2.6400, device='cuda:0'))\n\n\n\nnormalize(content_im).mean(dim=(1, 2))\n\ntensor([-0.9724, -0.9594, -0.4191], device='cuda:0')"
+  },
+  {
+    "objectID": "blog/posts/style-transfer/Style_Transfer.html#getting-intermediate-representations",
+    "href": "blog/posts/style-transfer/Style_Transfer.html#getting-intermediate-representations",
+    "title": "Neural Style Transfer",
+    "section": "Getting intermediate representations",
+    "text": "Getting intermediate representations\nWe want to feed some data through the network, storing the outputs of different layers. Here’s one way to do this:\n\ndef calc_features(imgs, target_layers=(18, 25)):\n    x = normalize(imgs)\n    feats = []\n    for i, layer in enumerate(vgg16[:max(target_layers)+1]):\n        x = layer(x)\n        if i in target_layers:\n            feats.append(x.clone())\n    return feats\n\n\nfeats = calc_features(content_im)\n[f.shape for f in feats]\n\n[torch.Size([512, 32, 32]), torch.Size([512, 16, 16])]"
+  },
+  {
+    "objectID": "blog/posts/style-transfer/Style_Transfer.html#trying-it-out",
+    "href": "blog/posts/style-transfer/Style_Transfer.html#trying-it-out",
+    "title": "Neural Style Transfer",
+    "section": "Trying it out",
+    "text": "Trying it out\n\nstyle_im = download_image(spiderweb_url).to(def_device)\nshow_image(style_im);\n\n\n\n\n\n\n\n\n\ndef calc_grams(img, target_layers=(1, 6, 11, 18, 25)):\n    return L(torch.einsum('chw, dhw -&gt; cd', x, x)/(x.shape[-1]*x.shape[-1])\n             for x in calc_features(img, target_layers))\n\n\nstyle_grams = calc_grams(style_im)\n\n\n[g.shape for g in style_grams]\n\n[torch.Size([64, 64]),\n torch.Size([128, 128]),\n torch.Size([256, 256]),\n torch.Size([512, 512]),\n torch.Size([512, 512])]\n\n\n\nstyle_grams.attrgot('shape')\n\n(#5) [torch.Size([64, 64]),torch.Size([128, 128]),torch.Size([256, 256]),torch.Size([512, 512]),torch.Size([512, 512])]\n\n\n\nclass StyleLossToTarget():\n    def __init__(self, target_im, target_layers=(1, 6, 11, 18, 25)):\n        fc.store_attr()\n        with torch.no_grad(): self.target_grams = calc_grams(target_im, self.target_layers)\n    def __call__(self, input_im):\n        return sum((f1-f2).pow(2).mean() for f1, f2 in\n                   zip(calc_grams(input_im, self.target_layers), self.target_grams))\n\n\nstyle_loss = StyleLossToTarget(style_im)\n\n\nstyle_loss(content_im)\n\ntensor(178.9305, device='cuda:0', grad_fn=&lt;AddBackward0&gt;)"
   }
 ]
