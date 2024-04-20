@@ -9,6 +9,9 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/littlegrad/littlegrad.html",
+      "/posts/style-transfer/Style_Transfer.html",
+      "/posts/ddpm/DDPM.html",
       "/posts/ConvNets/ConvNets.html",
       "/posts/stable-diffusion/stable-diffusion.html"
     ]
