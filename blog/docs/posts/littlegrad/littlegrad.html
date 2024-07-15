@@ -217,6 +217,7 @@ window.Quarto = {
   <li><a href="#visualising-the-computational-graph" id="toc-visualising-the-computational-graph" class="nav-link" data-scroll-target="#visualising-the-computational-graph">Visualising the Computational Graph</a></li>
   <li><a href="#computing-gradients-using-chain-rule" id="toc-computing-gradients-using-chain-rule" class="nav-link" data-scroll-target="#computing-gradients-using-chain-rule">Computing Gradients using Chain Rule</a></li>
   <li><a href="#topological-sort" id="toc-topological-sort" class="nav-link" data-scroll-target="#topological-sort">Topological Sort</a></li>
+  <li><a href="#activation-functions" id="toc-activation-functions" class="nav-link" data-scroll-target="#activation-functions">Activation Functions</a></li>
   <li><a href="#the-autograd-engine" id="toc-the-autograd-engine" class="nav-link" data-scroll-target="#the-autograd-engine">The AutoGrad Engine</a></li>
   <li><a href="#example-using-a-neural-network" id="toc-example-using-a-neural-network" class="nav-link" data-scroll-target="#example-using-a-neural-network">Example using a Neural Network</a></li>
   </ul>
@@ -682,12 +683,15 @@ window.Quarto = {
 </div>
 </div>
 <p>Voila! We’ve successfully implemented the backward pass.</p>
+</section>
+<section id="activation-functions" class="level1">
+<h1>Activation Functions</h1>
 <p>Next, let’s add some activation functions in the mix. <code>tanh</code> and <code>relu</code> are two of the most popular activation functions. <span class="math display">\[ \tanh x={\frac {e^{2x}-1}{e^{2x}+1}}.\]</span></p>
 <p><span class="math display">\[ ReLU(x)={\begin{cases}x&amp;;{\text{if }}x&gt;0,\\0&amp;;{\text{otherwise}}\end{cases}}\]</span></p>
 <p>The derivative of <span class="math inline">\(\tanh\)</span> turns out to be: <span class="math display">\[
 \frac{d\tanh}{dx} = 1 - \tanh^2(x)
 \]</span> <span class="math inline">\(ReLU\)</span>’s derivative is trivial to work out.</p>
-<div id="cell-52" class="cell" data-execution_count="30">
+<div id="cell-53" class="cell" data-execution_count="30">
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tanh(<span class="va">self</span>):</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  x <span class="op">=</span> <span class="va">self</span>.data</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  t <span class="op">=</span> (math.exp(<span class="dv">2</span><span class="op">*</span>x) <span class="op">-</span> <span class="dv">1</span>)<span class="op">/</span>(math.exp(<span class="dv">2</span><span class="op">*</span>x) <span class="op">+</span> <span class="dv">1</span>)</span>
@@ -710,7 +714,7 @@ window.Quarto = {
 <section id="the-autograd-engine" class="level1">
 <h1>The AutoGrad Engine</h1>
 <p>Here’s what our <code>Value</code> class now looks like, in its full glory. The <code>Value</code> class is now a full-fledged autograd engine, ready to train neural networks (See part 2 for training neural nets).</p>
-<div id="cell-55" class="cell" data-execution_count="31">
+<div id="cell-56" class="cell" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Value:</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, data, _children<span class="op">=</span>(), _op<span class="op">=</span><span class="st">''</span>, label<span class="op">=</span><span class="st">''</span>):</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.data <span class="op">=</span> data</span>
@@ -783,7 +787,7 @@ window.Quarto = {
 <section id="example-using-a-neural-network" class="level1">
 <h1>Example using a Neural Network</h1>
 <p>Let’s test our engine on a toy neural network.</p>
-<div id="cell-58" class="cell" data-execution_count="32">
+<div id="cell-59" class="cell" data-execution_count="32">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># inputs x1,x2</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>x1 <span class="op">=</span> Value(<span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'x1'</span>)</span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>x2 <span class="op">=</span> Value(<span class="fl">0.0</span>, label<span class="op">=</span><span class="st">'x2'</span>)</span>
@@ -799,7 +803,7 @@ window.Quarto = {
 <span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> x1w1x2w2 <span class="op">+</span> b<span class="op">;</span> n.label <span class="op">=</span> <span class="st">'n'</span></span>
 <span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> n.tanh()<span class="op">;</span> o.label <span class="op">=</span> <span class="st">'o'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-59" class="cell" data-outputid="f49decc7-e5ef-4195-cfd4-29a600f1f9ad" data-execution_count="33">
+<div id="cell-60" class="cell" data-outputid="f49decc7-e5ef-4195-cfd4-29a600f1f9ad" data-execution_count="33">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>draw_dot(o)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Could not load "/home/darkknightxi/miniconda3/bin/../lib/graphviz/libgvplugin_pango.so.6" - It was found, so perhaps one of its dependents was not.  Try ldd.</code></pre>
@@ -812,10 +816,10 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="cell-60" class="cell" data-execution_count="34">
+<div id="cell-61" class="cell" data-execution_count="34">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>o.backward()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-61" class="cell" data-outputid="46bb1a72-b70c-4051-aff0-476004cf2822" data-execution_count="35">
+<div id="cell-62" class="cell" data-outputid="46bb1a72-b70c-4051-aff0-476004cf2822" data-execution_count="35">
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>draw_dot(o)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Could not load "/home/darkknightxi/miniconda3/bin/../lib/graphviz/libgvplugin_pango.so.6" - It was found, so perhaps one of its dependents was not.  Try ldd.</code></pre>

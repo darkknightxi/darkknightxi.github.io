@@ -46,5 +46,8 @@
   },
   "blog/posts/littlegrad/littlegrad.ipynb": {
     "littlegrad.html": "905a48cb"
+  },
+  "blog/posts/littlegrad/nn.ipynb": {
+    "nn.html": "f6de9a22"
   }
 }
